@@ -1,48 +1,43 @@
 import javax.swing.JComponent;
+import javax.swing.Timer;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.net.URL;
-import javax.swing.Timer;
 import java.util.Random;
 
 public class Draw extends JComponent{
-
-	private BufferedImage image;
-	private BufferedImage backgroundImage;
-	public URL resource = getClass().getResource("run0.png");
-
-	// circle's position
+	
 	public int x = 0;
 	public int y = 430;
 	public int height = 0;
 	public int width = 0;
 
-	public int state = 0;
+	public BufferedImage backgroundImage;
+	public Player player;
 
 	public Random randomizer;
 
-	public int enemyCount ;
+	public int enemyCount;
 	Monster[] monsters = new Monster[10];
+	public int state = 0;
 
 	public Draw(){
-
 		randomizer = new Random();
+		player = new Player(-10, 520, this);
+
 		spawnEnemy();
 
 		try{
-			image = ImageIO.read(resource);
 			backgroundImage = ImageIO.read(getClass().getResource("background.jpg"));
 		}
 		catch(IOException e){
 			e.printStackTrace();
 		}
-
-		height = image.getHeight();
-		width = image.getWidth();
 	}
+
 
 	public void spawnEnemy(){
 		if(enemyCount < 10){
@@ -51,102 +46,6 @@ public class Draw extends JComponent{
 		}
 	}
 
-	public void reloadImage(){
-		state++;
-
-		if(state == 0){
-			resource = getClass().getResource("run0.png");
-		}
-		else if(state == 1){
-			resource = getClass().getResource("run1.png");
-		}
-		else if(state == 2){
-			resource = getClass().getResource("run2.png");
-		}
-		else if(state == 3){
-			resource = getClass().getResource("run3.png");
-		}
-		else if(state == 4){
-			resource = getClass().getResource("run4.png");
-		}
-		else if(state == 5){
-			resource = getClass().getResource("run5.png");
-			state = 0;
-		}
-
-		try{
-			image = ImageIO.read(resource);
-		}
-		catch(IOException e){
-			e.printStackTrace();
-		}
-	}
-
-	public void attackAnimation(){
-		Thread thread1 = new Thread(new Runnable(){
-			public void run(){
-				for(int ctr = 0; ctr < 5; ctr++){
-					try {
-						if(ctr==4){
-							resource = getClass().getResource("run0.png");
-						}
-						else{
-							resource = getClass().getResource("attack"+ctr+".png");
-						}
-						
-						try{
-							image = ImageIO.read(resource);
-						}
-						catch(IOException e){
-							e.printStackTrace();
-						}
-				        repaint();
-				        Thread.sleep(100);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-
-				for(int x=0; x<monsters.length; x++){
-					if(monsters[x]!=null){
-						if(monsters[x].contact){
-							monsters[x].life = monsters[x].life - 10;
-						}
-					}
-				}
-			}
-		});
-		thread1.start();
-	}
-
-	public void attack(){
-		attackAnimation();
-		checkCollision();
-	}
-
-	public void moveUp(){
-		y = y - 5;
-		reloadImage();
-		repaint();
-	}
-
-	public void moveDown(){
-		y = y + 5;
-		reloadImage();
-		repaint();
-	}
-
-	public void moveLeft(){
-		x = x - 5;
-		reloadImage();
-		repaint();
-	}
-
-	public void moveRight(){
-		x = x + 5;
-		reloadImage();
-		repaint();
-	}
 
 	public void checkCollision(){
 		int xChecker = x + width;
@@ -197,7 +96,8 @@ public class Draw extends JComponent{
 		super.paintComponent(g);
 		g.setColor(Color.YELLOW);
 		g.drawImage(backgroundImage, 0, 0, this);
-		g.drawImage(image, x, y, this);
+		g.drawImage(player.image, player.x, player.y, this);
+
 		for(int c = 0; c < monsters.length; c++){		
 			if(monsters[c]!=null){
 
