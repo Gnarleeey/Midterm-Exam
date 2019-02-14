@@ -1,11 +1,12 @@
 import javax.swing.JComponent;
-import javax.swing.Timer;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.net.URL;
+import javax.swing.Timer;
+import java.util.Random;
 
 public class Draw extends JComponent{
 
@@ -14,24 +15,22 @@ public class Draw extends JComponent{
 	public URL resource = getClass().getResource("run0.png");
 
 	// circle's position
-	public int x = 30;
-	public int y = 30;
+	public int x = 0;
+	public int y = 430;
+	public int height = 0;
+	public int width = 0;
 
-	// animation states
 	public int state = 0;
 
-	Monster monster1;
-	Monster monster2;
-	Monster monster3;
-	Monster monster4;
-	Monster monster5;
+	public Random randomizer;
+
+	public int enemyCount ;
+	Monster[] monsters = new Monster[10];
 
 	public Draw(){
-		monster1 = new Monster(50, 250);
-		monster2 = new Monster(100, 200);
-		monster3 = new Monster(150, 150);
-		monster4 = new Monster(200, 100);
-		monster5 = new Monster(250, 50);
+
+		randomizer = new Random();
+		spawnEnemy();
 
 		try{
 			image = ImageIO.read(resource);
@@ -39,6 +38,16 @@ public class Draw extends JComponent{
 		}
 		catch(IOException e){
 			e.printStackTrace();
+		}
+
+		height = image.getHeight();
+		width = image.getWidth();
+	}
+
+	public void spawnEnemy(){
+		if(enemyCount < 10){
+			monsters[enemyCount] = new Monster(randomizer.nextInt(100), randomizer.nextInt(100), this);
+			enemyCount++;
 		}
 	}
 
@@ -97,6 +106,14 @@ public class Draw extends JComponent{
 						e.printStackTrace();
 					}
 				}
+
+				for(int x=0; x<monsters.length; x++){
+					if(monsters[x]!=null){
+						if(monsters[x].contact){
+							monsters[x].life = monsters[x].life - 10;
+						}
+					}
+				}
 			}
 		});
 		thread1.start();
@@ -104,6 +121,7 @@ public class Draw extends JComponent{
 
 	public void attack(){
 		attackAnimation();
+		checkCollision();
 	}
 
 	public void moveUp(){
@@ -129,17 +147,73 @@ public class Draw extends JComponent{
 		reloadImage();
 		repaint();
 	}
+
+	public void checkCollision(){
+		int xChecker = x + width;
+		int yChecker = y;
+
+		for(int x=0; x<monsters.length; x++){
+			boolean collideX = false;
+			boolean collideY = false;
+
+			if(monsters[x]!=null){
+				monsters[x].contact = false;
+
+				if(yChecker > monsters[x].yPos){
+					if(yChecker-monsters[x].yPos < monsters[x].height){
+						collideY = true;
+						System.out.println("collideY");
+					}
+				}
+				else{
+					if(monsters[x].yPos - (yChecker+height) < monsters[x].height){
+						collideY = true;
+						System.out.println("collideY");
+					}
+				}
+
+				if(xChecker > monsters[x].xPos){
+					if((xChecker-width)-monsters[x].xPos < monsters[x].width){
+						collideX = true;
+						System.out.println("collideX");
+					}
+				}
+				else{
+					if(monsters[x].xPos-xChecker < monsters[x].width){
+						collideX = true;
+						System.out.println("collideX");
+					}
+				}
+			}
+
+			if(collideX && collideY){
+				System.out.println("collision!");
+				monsters[x].contact = true;
+			}
+		}
+	}
 	
 	public void paintComponent(Graphics g){
 		super.paintComponent(g);
 		g.setColor(Color.YELLOW);
 		g.drawImage(backgroundImage, 0, 0, this);
 		g.drawImage(image, x, y, this);
+		for(int c = 0; c < monsters.length; c++){		
+			if(monsters[c]!=null){
 
-		g.drawImage(monster1.image, monster1.xPos, monster1.yPos, this);
-		g.drawImage(monster2.image, monster2.xPos, monster2.yPos, this);
-		g.drawImage(monster3.image, monster3.xPos, monster3.yPos, this);
-		g.drawImage(monster4.image, monster4.xPos, monster4.yPos, this);
-		g.drawImage(monster5.image, monster5.xPos, monster5.yPos, this);
+				g.drawImage(monsters[c].image, monsters[c].xPos, monsters[c].yPos, this);
+				g.setColor(Color.GREEN);
+				g.fillRect(monsters[c].xPos+7, monsters[c].yPos, monsters[c].life, 2);
+			}	
+		}
+	}
+	public void checkDeath(){
+		for(int c = 0; c < monsters.length; c++){
+			if(monsters[c]!=null){
+				if(!monsters[c].alive){
+					monsters[c] = null;
+				}
+			}			
+		}
 	}
 }
